@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin-dashboard",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@petwalk/admin-dashboard", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@petwalk/backend", "start:dev"],
+      "port": 3000
+    }
+  ]
+}

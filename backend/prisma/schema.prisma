@@ -1,0 +1,223 @@
+// PetWalk database schema
+// Reference: docs/DATABASE_SCHEMA.md
+// Tahap 0: fokus tabel users, species, breeds, pets
+// Tabel worker_profiles, bookings, payments, reviews, payouts menyusul di tahap berikutnya
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Tahap 0 — Core (users, species, breeds, pets)
+// ---------------------------------------------------------------------------
+
+model User {
+  id              String     @id @default(uuid())
+  name            String
+  email           String?    @unique
+  phone           String?    @unique
+  passwordHash    String?
+  role            UserRole[] @default([OWNER])
+  profilePhotoUrl String?
+  address         String?
+  latitude        Decimal?   @db.Decimal(10, 8)
+  longitude       Decimal?   @db.Decimal(11, 8)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  pets            Pet[]
+  workerProfile   WorkerProfile?
+  bookingsAsOwner Booking[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+enum UserRole {
+  OWNER
+  WORKER
+  ADMIN
+}
+
+model Species {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  breeds          Breed[]
+  pets            Pet[]
+  workerExpertise WorkerSpeciesExpertise[]
+}
+
+model Breed {
+  id        String   @id @default(uuid())
+  speciesId String
+  species   Species  @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+
+  pets Pet[]
+
+  @@unique([speciesId, name])
+}
+
+model Pet {
+  id               String    @id @default(uuid())
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  speciesId        String
+  species          Species   @relation(fields: [speciesId], references: [id])
+  breedId          String?
+  breed            Breed?    @relation(fields: [breedId], references: [id])
+  name             String
+  ageMonths        Int // umur dalam bulan
+  weightKg         Decimal?  @db.Decimal(8, 2)
+  temperamentNotes String?
+  medicalNotes     String?
+  photoUrl         String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  bookings Booking[]
+
+  @@index([ownerId])
+  @@index([speciesId])
+}
+
+// ---------------------------------------------------------------------------
+// Tahap 2 — Worker (stubs, full implementation di Tahap 2)
+// ---------------------------------------------------------------------------
+
+model WorkerProfile {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                    String?
+  verificationStatus     String   @default("pending") // pending | approved | rejected
+  adminNote              String? // catatan admin saat approve/reject (misal alasan penolakan)
+  ktpDocumentUrl         String?
+  bankAccountNumber      String?
+  bankName               String?
+  serviceRadiusKm        Decimal? @db.Decimal(5, 2)
+  baseLatitude           Decimal? @db.Decimal(10, 8)
+  baseLongitude          Decimal? @db.Decimal(11, 8)
+  averageRating          Decimal? @default(0) @db.Decimal(3, 2)
+  totalCompletedSessions Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  speciesExpertise WorkerSpeciesExpertise[]
+  pricing          WorkerPricing[]
+  availability     WorkerAvailability[]
+  bookings         Booking[]
+  payouts          Payout[]
+
+  @@index([baseLatitude, baseLongitude])
+}
+
+model WorkerSpeciesExpertise {
+  id              String        @id @default(uuid())
+  workerProfileId String
+  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  speciesId       String
+  species         Species       @relation(fields: [speciesId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  @@unique([workerProfileId, speciesId])
+}
+
+model WorkerPricing {
+  id              String        @id @default(uuid())
+  workerProfileId String
+  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  durationMinutes Int
+  price           Decimal       @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+
+  @@unique([workerProfileId, durationMinutes])
+}
+
+model WorkerAvailability {
+  id              String        @id @default(uuid())
+  workerProfileId String
+  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  dayOfWeek       Int // 0-6 (Sunday=0)
+  startTime       DateTime      @db.Time(6)
+  endTime         DateTime      @db.Time(6)
+  createdAt       DateTime      @default(now())
+
+  @@unique([workerProfileId, dayOfWeek])
+}
+
+// ---------------------------------------------------------------------------
+// Tahap 3 — Booking & Payments
+// ---------------------------------------------------------------------------
+
+model Booking {
+  id                 String        @id @default(uuid())
+  ownerId            String
+  owner              User          @relation(fields: [ownerId], references: [id])
+  workerProfileId    String
+  workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id])
+  petId              String
+  pet                Pet           @relation(fields: [petId], references: [id])
+  scheduledStart     DateTime
+  durationMinutes    Int
+  priceTotal         Decimal       @db.Decimal(10, 2)
+  platformCommission Decimal       @db.Decimal(10, 2)
+  workerPayout       Decimal       @db.Decimal(10, 2)
+  status             String        @default("pending") // pending | accepted | rejected | in_progress | completed | cancelled
+  ownerNotes         String?
+  actualStart        DateTime?
+  actualEnd          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deletedAt          DateTime?
+
+  payment Payment?
+  review  Review?
+
+  @@index([ownerId])
+  @@index([workerProfileId, scheduledStart])
+  @@index([status])
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount            Decimal  @db.Decimal(10, 2)
+  paymentMethod     String // e-wallet | va | credit_card | transfer
+  paymentGatewayRef String? // Midtrans/Xendit reference
+  status            String   @default("pending") // pending | paid | failed | refunded
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  rating    Int // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model Payout {
+  id              String        @id @default(uuid())
+  workerProfileId String
+  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id])
+  amount          Decimal       @db.Decimal(10, 2)
+  status          String        @default("pending") // pending | processed | failed
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}

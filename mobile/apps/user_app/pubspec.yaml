@@ -1,0 +1,25 @@
+name: petwalk_user_app
+description: PetWalk mobile app for pet owners.
+version: 0.1.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.0.0
+  url_launcher: ^6.3.0
+  petwalk_core:
+    path: ../../packages/core
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  shared_preferences: ^2.3.0
+
+flutter:
+  uses-material-design: true

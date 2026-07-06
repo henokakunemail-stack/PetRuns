@@ -1,0 +1,22 @@
+{
+  "name": "petwalk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PetWalk monorepo — marketplace jasa jalan-jalan hewan peliharaan",
+  "scripts": {
+    "dev:backend": "pnpm --filter @petwalk/backend dev",
+    "dev:admin": "pnpm --filter @petwalk/admin-dashboard dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.1.3",
+    "prettier": "^3.3.3"
+  },
+  "packageManager": "pnpm@9.12.1",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

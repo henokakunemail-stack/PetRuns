@@ -1,0 +1,5 @@
+packages:
+  - "backend"
+  - "admin-dashboard"
+  - "mobile/apps/*"
+  - "mobile/packages/*"

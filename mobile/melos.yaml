@@ -1,0 +1,13 @@
+name: petwalk_mobile
+packages:
+  - apps/*
+  - packages/*
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+    runPubGetInDirectory: false
+
+ide:
+  idea: true
+  androidStudio: true
