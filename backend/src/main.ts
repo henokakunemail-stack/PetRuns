@@ -2,12 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api');
+
+  app.use(helmet());
+
+  // CORS: origin dashboard/web diambil dari env (comma-separated); mobile app tidak terpengaruh CORS.
+  const corsOrigins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim());
+  app.enableCors({
+    origin: corsOrigins?.length ? corsOrigins : true, // default permisif untuk development
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

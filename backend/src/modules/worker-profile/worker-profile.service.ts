@@ -64,11 +64,18 @@ export class WorkerProfileService {
     });
   }
 
+  /**
+   * Profil publik worker — dilihat owner saat browsing sebelum booking.
+   * Field sensitif (KTP, rekening) dan kontak langsung (email/phone) sengaja
+   * TIDAK ikut: kontak baru dibagikan lewat detail booking setelah ada relasi,
+   * dan dokumen verifikasi hanya untuk admin.
+   */
   async getById(id: string) {
     return this.prisma.workerProfile.findUnique({
       where: { id },
+      omit: { ktpDocumentUrl: true, bankAccountNumber: true, bankName: true },
       include: {
-        user: { select: { id: true, name: true, email: true, phone: true, role: true } },
+        user: { select: { id: true, name: true, profilePhotoUrl: true } },
         speciesExpertise: { include: { species: true } },
         pricing: { orderBy: { durationMinutes: 'asc' } },
         availability: { orderBy: { dayOfWeek: 'asc' } },

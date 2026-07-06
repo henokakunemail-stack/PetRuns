@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -25,6 +27,12 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Cache in-memory untuk data master (species/breeds). Kalau nanti backend
+    // jalan multi-instance, ganti store ke Redis — interface-nya sama.
+    CacheModule.register({ isGlobal: true }),
+    // Rate limit global: 100 request / menit per IP. Cukup longgar untuk pemakaian
+    // normal mobile app, tapi menahan brute-force login & scraping.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -56,7 +64,12 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
   ],
   controllers: [HealthController],
   providers: [
-    // Urutan penting: JwtAuthGuard dulu (isi request.user), baru RolesGuard (baca request.user).
+    // Urutan penting: Throttler paling depan (tolak flood sebelum kerja lain),
+    // lalu JwtAuthGuard (isi request.user), baru RolesGuard (baca request.user).
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

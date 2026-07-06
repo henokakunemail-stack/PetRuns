@@ -36,8 +36,7 @@ model User {
   workerProfile   WorkerProfile?
   bookingsAsOwner Booking[]
 
-  @@index([email])
-  @@index([phone])
+  // Tidak perlu @@index untuk email/phone — @unique di atas sudah membuat unique index.
 }
 
 enum UserRole {
@@ -121,6 +120,8 @@ model WorkerProfile {
   payouts          Payout[]
 
   @@index([baseLatitude, baseLongitude])
+  // Dipakai searchWorkers (filter approved) & admin list (filter per status).
+  @@index([verificationStatus])
 }
 
 model WorkerSpeciesExpertise {
@@ -132,6 +133,9 @@ model WorkerSpeciesExpertise {
   createdAt       DateTime      @default(now())
 
   @@unique([workerProfileId, speciesId])
+  // searchWorkers mencari dari sisi species ("worker mana yang bisa handle species X") —
+  // unique di atas hanya meng-cover lookup dari sisi workerProfileId (leftmost prefix).
+  @@index([speciesId])
 }
 
 model WorkerPricing {
@@ -220,4 +224,7 @@ model Payout {
   processedAt     DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  // Dipakai list payout per worker (admin & worker melihat riwayat pencairannya).
+  @@index([workerProfileId])
 }

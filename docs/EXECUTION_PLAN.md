@@ -43,12 +43,31 @@
 - [x] User app: search worker (GPS + filter species/durasi), detail worker, flow booking, riwayat booking, bayar (redirect Midtrans Snap), beri rating
 - [x] Worker app: terima/tolak/mulai/selesaikan booking (wiring `worker_bookings_screen` ke API asli), wizard profil (bio/bank/lokasi, spesialisasi, harga, jadwal ketersediaan dengan time picker)
 - [x] Perbaikan bug signifikan yang ditemukan saat wiring: `BookingStatus` di Dart memetakan ke string UPPERCASE padahal backend pakai lowercase/`in_progress`; route `/worker-profile/me` dkk salah (harusnya `/worker-profiles/me`, `/expertise`, `/pricing`, `/availability`); `UserModel.role` singular padahal backend kirim `roles` array; `StateProvider` tidak ada di Riverpod 3.x; `worker_profile_setup_screen.dart` punya syntax error fatal (bracket tidak seimbang) yang bikin seluruh file gagal parse — ditulis ulang bersih
+- [x] User app: form tambah/edit/hapus pet lengkap (`pet_form_screen.dart`) — nama, jenis (dropdown species), ras (dropdown breeds per species, opsional), umur, berat, temperamen, catatan medis; delete dengan dialog konfirmasi
 - [ ] Push notification (FCM) — butuh Firebase project dari user, belum diimplementasi
 
-### Fase F — QA & Deployment Readiness
-- [ ] CI dasar (GitHub Actions: lint + test on push)
-- [ ] Dockerfile backend + panduan deploy (Railway/Render)
-- [ ] Checklist keamanan dasar (rate limiting, helmet, CORS, secrets di env bukan kode)
+### Fase F — QA & Deployment Readiness — ✅ SELESAI
+- [x] CI dasar (GitHub Actions: type-check + lint + test backend, build admin dashboard) — `.github/workflows/ci.yml`
+- [x] Dockerfile backend multi-stage (`backend/Dockerfile`) + panduan deploy Railway/Render/Vercel — `docs/DEPLOYMENT.md`
+- [x] Keamanan dasar: helmet (CSP/HSTS/nosniff — diverifikasi via header respons), rate limiting 100 req/menit/IP (diverifikasi: request ke-101+ dapat 429), CORS configurable via `CORS_ORIGINS` env
+- [x] Bonus: bug otorisasi diperbaiki — pets (ownerId dari JWT + cek kepemilikan di semua operasi) & users (PATCH/GET hanya diri sendiri/admin), 6 unit test baru (total 85)
+- [x] Git repo diperbaiki (`.git` korup sejak awal) + commit baseline `8da33d6`
+
+### Fase F.2 — Optimasi Database — ✅ SELESAI (2026-07-06)
+- [x] **Indexing** — audit seluruh pola query vs index. Ditambahkan: `WorkerSpeciesExpertise.speciesId` (dipakai searchWorkers dari sisi species), `WorkerProfile.verificationStatus` (filter approved/pending), `Payout.workerProfileId` (list payout per worker). Dihapus: index redundan `User.email` & `User.phone` (sudah ter-cover unique constraint). Semua diverifikasi terpasang di Supabase via `pg_indexes`.
+- [x] **Caching** — in-memory cache (@nestjs/cache-manager) untuk data master species & breeds, TTL 10 menit, auto-invalidate saat admin menambah data. Terukur: latensi turun dari ~1,17 dtk (roundtrip Supabase Tokyo) ke ~0,45 dtk (cache hit). Catatan: kalau backend nanti multi-instance, ganti store ke Redis — interface sama.
+- [x] **Connection pooling** — sudah via Supabase PgBouncer (port 6543, `?pgbouncer=true`); migrasi lewat `DIRECT_URL` port 5432.
+- [x] Bonus: `POST /species` & `POST /breeds` sekarang `@Roles('ADMIN')` — sebelumnya user biasa bisa menambah data master.
+- Belum perlu untuk MVP (sengaja): Redis, partial index untuk soft-delete, read replica.
+
+### Fase F.3 — Security Review Menyeluruh — ✅ SELESAI (2026-07-07)
+Audit seluruh permukaan API + autentikasi sebelum commit. **3 celah ditemukan & diperbaiki, semua diverifikasi live:**
+- [x] **KRITIS — refresh token bisa dipakai sebagai access token**: `JwtStrategy.validate()` tidak memeriksa claim `type`, jadi refresh token (berlaku 7 hari, secret sama) lolos sebagai access token & membypass revocation. Sekarang ditolak eksplisit (verifikasi live: 401). Bonus: hapus fallback `'fallback-secret'` — server sekarang fail-fast saat boot kalau `JWT_SECRET` kosong.
+- [x] **Data sensitif worker terekspos**: `GET /worker-profiles/:id` (profil publik untuk browsing) ikut mengembalikan `bankAccountNumber`, `ktpDocumentUrl`, `bankName`, plus email/phone worker. Sekarang di-omit — kontak dibagikan hanya lewat detail booking, dokumen verifikasi hanya untuk admin (verifikasi live: field hilang, pricing tetap ada).
+- [x] **Mobile log password**: `LogInterceptor(requestBody: true)` di api_client mencatat body login/register (berisi password plaintext) ke console. Sekarang logging hanya di debug build & requestBody dimatikan.
+- [x] Regression test ditambahkan (4 test JwtStrategy — total backend **89 test, semua lolos**).
+- [x] Sudah dicek aman: register tidak bisa self-assign ADMIN; login pakai pesan error seragam (anti user-enumeration); bcrypt cost 10; webhook Midtrans wajib signature SHA512; `$queryRaw` hanya tagged template (aman injection); ValidationPipe whitelist+forbidNonWhitelisted global; tidak ada secret di file yang di-commit (`backend/.env` ter-ignore).
+- Catatan risiko yang diterima untuk MVP (didokumentasikan, bukan bug): refresh token revocation in-memory (reset saat restart), token mobile di SharedPreferences (nanti flutter_secure_storage), sesi admin dashboard di localStorage (internal tool).
 
 ### Fase G — Go-Live (butuh aksi Anda, tidak bisa saya lakukan otomatis)
 Hal-hal berikut perlu identitas/pembayaran asli milik Anda — saya siapkan semua kode & instruksinya, tapi pendaftaran akunnya harus Anda sendiri:

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../constants/app_constants.dart';
@@ -30,9 +31,13 @@ final class ApiClient {
         },
       ),
     );
-    dio.interceptors.add(
-      LogInterceptor(requestBody: true, responseBody: false),
-    );
+    // Logging hanya di debug build, dan JANGAN pernah log body request —
+    // body login/register berisi password plaintext.
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(requestBody: false, responseBody: false),
+      );
+    }
     return dio;
   }
 
