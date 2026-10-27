@@ -80,7 +80,7 @@ class DefaultMockPool implements IPool {
 
   async end(): Promise<void> {}
 
-  on(..._args: unknown[]): void {}
+  on(): void {}
 }
 
 export class DatabaseClient {
