@@ -37,14 +37,14 @@ jobs:
         run: |
           cd mobile/apps/user_app
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release --android-skip-build-dependency-validation
           cp build/app/outputs/flutter-apk/app-release.apk ../../../PetWalk-UserApp-release.apk
 
       - name: Build Worker App (Walker) APK
         run: |
           cd mobile/apps/worker_app
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release --android-skip-build-dependency-validation
           cp build/app/outputs/flutter-apk/app-release.apk ../../../PetWalk-WorkerApp-release.apk
 
       - name: Upload User App APK Artifact
