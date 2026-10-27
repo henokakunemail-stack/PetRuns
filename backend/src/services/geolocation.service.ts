@@ -1,5 +1,5 @@
 import { redisClient, type IRedisClient } from '../redis/redis-client.ts';
-import { dbClient, DatabaseClient, type QueryResultRow } from '../db/client.ts';
+import { dbClient, DatabaseClient } from '../db/client.ts';
 import { decryptField } from '../security/encryption.ts';
 import { HttpError } from './otp.service.ts';
 import type { SupportedPetType } from './pricing.service.ts';

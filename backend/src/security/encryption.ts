@@ -74,7 +74,7 @@ export async function decryptField(
       decipher.final(),
     ]);
     return decrypted.toString('utf8');
-  } catch (err) {
+  } catch {
     throw new Error('Decryption failed: auth tag verification error (data tampered or wrong key)');
   }
 }

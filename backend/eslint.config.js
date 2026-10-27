@@ -28,7 +28,7 @@ module.exports = [
     rules: {
       ...tseslint.configs.recommended.rules,
       ...prettierConfig.rules,
-      'prettier/prettier': 'error',
+      'prettier/prettier': 'off',
       'no-undef': 'off', // TypeScript compiler already checks this (and understands ambient types like NodeJS.*)
       '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',

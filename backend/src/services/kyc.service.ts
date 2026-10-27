@@ -7,7 +7,6 @@ import {
 import {
   workerProfileRepository,
   WorkerProfileRepository,
-  type WorkerProfile,
 } from '../repositories/worker-profile.repository.ts';
 import { HttpError } from './otp.service.ts';
 

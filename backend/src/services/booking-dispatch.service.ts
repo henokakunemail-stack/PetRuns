@@ -1,4 +1,4 @@
-import { dbClient, DatabaseClient, type QueryResultRow } from '../db/client.ts';
+import { dbClient, DatabaseClient } from '../db/client.ts';
 import { redisClient, type IRedisClient } from '../redis/redis-client.ts';
 import { paymentGatewayClient, type PaymentGatewayClient } from './payment.service.ts';
 import { HttpError } from './otp.service.ts';

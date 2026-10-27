@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { redisClient, type IRedisClient } from '../redis/redis-client.ts';
-import { userRepository, UserRepository, type User } from '../repositories/user.repository.ts';
+import { userRepository, UserRepository } from '../repositories/user.repository.ts';
 import { hashPhone } from '../security/encryption.ts';
 import { jwtService, JwtService } from '../security/jwt-service.ts';
 

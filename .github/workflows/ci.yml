@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: pnpm exec jest --ci
 
+      - name: Integration & Scenario Tests
+        run: node --test --experimental-strip-types test/phase1-foundation.runner.ts test/phase2-auth.runner.ts test/phase3-discovery.runner.ts test/chat.runner.ts test/phase4-instant-match.runner.ts test/phase5-service-execution.runner.ts test/phase6-reviews.runner.ts test/phase7-hardening-and-version.runner.ts test/live-scenario-simulation.runner.ts
+
   admin-dashboard:
     runs-on: ubuntu-latest
     defaults:
