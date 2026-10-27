@@ -1,8 +1,6 @@
-export interface QueryResultRow {
-  [column: string]: unknown;
-}
+export type QueryResultRow = Record<string, unknown>;
 
-export interface QueryResult<R extends QueryResultRow = Record<string, unknown>> {
+export interface QueryResult<R = Record<string, unknown>> {
   rows: R[];
   command: string;
   rowCount: number;
