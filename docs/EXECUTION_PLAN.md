@@ -69,6 +69,22 @@ Audit seluruh permukaan API + autentikasi sebelum commit. **3 celah ditemukan & 
 - [x] Sudah dicek aman: register tidak bisa self-assign ADMIN; login pakai pesan error seragam (anti user-enumeration); bcrypt cost 10; webhook Midtrans wajib signature SHA512; `$queryRaw` hanya tagged template (aman injection); ValidationPipe whitelist+forbidNonWhitelisted global; tidak ada secret di file yang di-commit (`backend/.env` ter-ignore).
 - Catatan risiko yang diterima untuk MVP (didokumentasikan, bukan bug): refresh token revocation in-memory (reset saat restart), token mobile di SharedPreferences (nanti flutter_secure_storage), sesi admin dashboard di localStorage (internal tool).
 
+### Fase F.4 — Production Baseline Hardening — ✅ SELESAI (2026-07-08)
+- [x] Baseline Prisma migration dibuat di `backend/prisma/migrations/20260708000000_init`, jadi production bisa pakai `prisma migrate deploy` dan tidak lagi bergantung pada `db push`.
+- [x] Refresh-token flow diperbaiki: controller tidak lagi memotong format `jti.jwt`, dan `TokenService` sekarang memakai `JWT_REFRESH_SECRET` + `JWT_REFRESH_EXPIRES_IN` sesuai env/docs.
+- [x] Env examples diselaraskan: backend punya `DIRECT_URL`, Midtrans, CORS; root `NEXT_PUBLIC_API_URL` sudah menyertakan `/api`.
+- Catatan verifikasi lokal: command via `pnpm --filter ... exec` timeout di environment ini karena dependency workspace/pnpm lokal tidak sehat; perlu jalankan ulang `pnpm install --frozen-lockfile`, lalu `pnpm --filter @petwalk/backend test` di mesin dev/CI.
+
+### Fase F.5 — Push Notification MVP — ✅ KODE SIAP (2026-07-08)
+- [x] Tabel `DeviceToken` + migration `20260708010000_add_device_tokens` dibuat dan sudah diterapkan ke Supabase.
+- [x] Backend module `notifications` ditambahkan: register/unregister device token, Firebase Admin init dari env, cleanup token invalid, dan pengiriman notifikasi best-effort.
+- [x] Booking flow mengirim push ke worker saat booking baru dibuat dan ke owner saat status booking berubah.
+- [x] Mobile core menambahkan sync FCM token setelah login untuk User App (`owner`) dan Worker App (`worker`).
+- [x] Backend diverifikasi: `prisma generate` sukses, `tsc --noEmit` sukses, Jest 16 suite / 94 test passing.
+- Belum bisa diuji end-to-end sampai Firebase project dibuat dan file native config (`google-services.json` / `GoogleService-Info.plist`) tersedia.
+- Midtrans sandbox belum bisa diuji live karena `MIDTRANS_SERVER_KEY` di `backend/.env` masih placeholder; checklist uji ada di `docs/MIDTRANS_SANDBOX_TEST.md`.
+- Mobile lockfile belum di-refresh di mesin ini karena Flutter/Dart CLI tidak tersedia; jalankan `flutter pub get` di `mobile/packages/core`, `mobile/apps/user_app`, dan `mobile/apps/worker_app` setelah Flutter SDK tersedia.
+
 ### Fase G — Go-Live (butuh aksi Anda, tidak bisa saya lakukan otomatis)
 Hal-hal berikut perlu identitas/pembayaran asli milik Anda — saya siapkan semua kode & instruksinya, tapi pendaftaran akunnya harus Anda sendiri:
 1. Buat akun **Supabase**/PostgreSQL hosting → isi `DATABASE_URL` production

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Block all cleartext HTTP traffic -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Enforce SSL Certificate Pinning for PetMatch Production API -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.petmatch.id</domain>
+        <pin-set expiration="2027-12-31">
+            <!-- Primary production certificate pin (SHA-256) -->
+            <pin digest="SHA-256">47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=</pin>
+            <!-- Backup certificate rotation pin (SHA-256) -->
+            <pin digest="SHA-256">k2rxAAPL3ZdCcHi3+4LDVUmwifu42643ToAsERQdynM=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>

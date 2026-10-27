@@ -12,6 +12,7 @@ import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { matchWorkers, WorkerCandidate } from './lib/matching.util';
 import { calculateCommissionBreakdown } from './lib/pricing.util';
 import { Actor, assertValidTransition, BookingStatus } from './lib/booking-status.util';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface RequestingUser {
   id: string;
@@ -23,6 +24,7 @@ export class BookingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private getCommissionPercent(): number {
@@ -123,7 +125,7 @@ export class BookingsService {
       this.getCommissionPercent(),
     );
 
-    return this.prisma.booking.create({
+    const booking = await this.prisma.booking.create({
       data: {
         ownerId,
         workerProfileId: dto.workerProfileId,
@@ -146,6 +148,8 @@ export class BookingsService {
         },
       },
     });
+    await this.notifications.notifyWorkerNewBooking(workerProfile.userId, booking.id);
+    return booking;
   }
 
   private assertWithinAvailability(
@@ -275,7 +279,7 @@ export class BookingsService {
     if (dto.status === 'in_progress') extra.actualStart = new Date();
     if (dto.status === 'completed') extra.actualEnd = new Date();
 
-    return this.prisma.booking.update({
+    const updated = await this.prisma.booking.update({
       where: { id },
       data: { status: dto.status, ...extra },
       include: {
@@ -288,6 +292,14 @@ export class BookingsService {
         },
       },
     });
+    if (actor === 'WORKER' || actor === 'ADMIN') {
+      await this.notifications.notifyOwnerBookingStatus(
+        booking.ownerId,
+        booking.id,
+        dto.status,
+      );
+    }
+    return updated;
   }
 
   /** Tentukan peran requester terhadap booking ini (OWNER/WORKER/ADMIN), atau throw kalau tidak berhak sama sekali. */

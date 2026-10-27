@@ -27,14 +27,12 @@ export class AuthController {
   @Post('refresh')
   @Public()
   async refresh(@Body() dto: RefreshTokenDto): Promise<AuthResult> {
-    const [, token] = dto.refreshToken.split('.');
-    return this.authService.refresh(token);
+    return this.authService.refresh(dto.refreshToken);
   }
 
   @Post('logout')
   @Public()
   async logout(@Body('refreshToken') rt?: string) {
-    const token = rt?.split('.')[1] ?? undefined;
-    return this.authService.logout(token);
+    return this.authService.logout(rt);
   }
 }

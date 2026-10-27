@@ -35,6 +35,7 @@ model User {
   pets            Pet[]
   workerProfile   WorkerProfile?
   bookingsAsOwner Booking[]
+  deviceTokens    DeviceToken[]
 
   // Tidak perlu @@index untuk email/phone — @unique di atas sudah membuat unique index.
 }
@@ -227,4 +228,17 @@ model Payout {
 
   // Dipakai list payout per worker (admin & worker melihat riwayat pencairannya).
   @@index([workerProfileId])
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String // android | ios | web
+  app       String // owner | worker
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

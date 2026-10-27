@@ -20,6 +20,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PayoutsModule } from './modules/payouts/payouts.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HealthController } from './health/health.controller';
 import { JwtAuthGuard } from './modules/auth/guards/public-guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
@@ -55,6 +56,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     PaymentsModule,
     PayoutsModule,
     ReviewsModule,
+    NotificationsModule,
     PrismaModule,
     AuthModule,
     UsersModule,

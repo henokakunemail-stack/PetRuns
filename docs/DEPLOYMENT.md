@@ -27,6 +27,7 @@
 | `PLATFORM_COMMISSION_PERCENT` | `20` |
 | `MIDTRANS_SERVER_KEY` / `MIDTRANS_CLIENT_KEY` | Dari dashboard Midtrans (sandbox dulu) |
 | `MIDTRANS_IS_PRODUCTION` | `false` sampai go-live pembayaran |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` / `FIREBASE_SERVICE_ACCOUNT_BASE64` | Service account Firebase untuk FCM. Isi salah satu saja; base64 lebih aman untuk env multiline. |
 | `CORS_ORIGINS` | URL admin dashboard production, mis. `https://admin.petwalk.id` |
 | `PORT` | Biasanya di-set otomatis oleh platform |
 
@@ -35,8 +36,7 @@ Jalankan sekali dari mesin lokal (atau release command platform):
 ```bash
 cd backend && pnpm prisma migrate deploy
 ```
-> Catatan: saat ini skema dibuat via `db push`. Sebelum production, buat baseline migration:
-> `pnpm prisma migrate dev --name init` di lokal, commit folder `prisma/migrations`.
+Baseline migration sudah tersedia di `backend/prisma/migrations/20260708000000_init`.
 
 ## Webhook Midtrans
 Setelah backend punya URL publik, daftarkan di dashboard Midtrans:

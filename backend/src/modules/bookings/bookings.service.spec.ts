@@ -27,6 +27,13 @@ function makePrismaMock(): MockPrisma {
   };
 }
 
+function makeNotificationsMock() {
+  return {
+    notifyWorkerNewBooking: jest.fn().mockResolvedValue(undefined),
+    notifyOwnerBookingStatus: jest.fn().mockResolvedValue(undefined),
+  };
+}
+
 // Senin = UTC day 1. Worker tersedia Senin 09:00-17:00.
 const AVAILABILITY = [
   {
@@ -49,16 +56,19 @@ describe('BookingsService.createBooking', () => {
   let prisma: MockPrisma;
   let config: ConfigService;
   let service: BookingsService;
+  let notifications: ReturnType<typeof makeNotificationsMock>;
 
   beforeEach(() => {
     prisma = makePrismaMock();
     config = { get: jest.fn().mockReturnValue('20') } as unknown as ConfigService;
-    service = new BookingsService(prisma as unknown as PrismaService, config);
+    notifications = makeNotificationsMock();
+    service = new BookingsService(prisma as unknown as PrismaService, config, notifications as any);
   });
 
   const basePet = { id: 'pet-1', ownerId: 'owner-1', deletedAt: null };
   const baseWorkerProfile = {
     id: 'worker-profile-1',
+    userId: 'worker-user-1',
     verificationStatus: 'approved',
     pricing: [{ durationMinutes: 60, price: 100_000 }],
     availability: AVAILABILITY,
@@ -83,6 +93,10 @@ describe('BookingsService.createBooking', () => {
     expect(result.platformCommission).toBe(20_000);
     expect(result.workerPayout).toBe(80_000);
     expect(result.status).toBe('pending');
+    expect(notifications.notifyWorkerNewBooking).toHaveBeenCalledWith(
+      'worker-user-1',
+      'booking-1',
+    );
   });
 
   it('menolak kalau pet bukan milik owner', async () => {
@@ -179,11 +193,13 @@ describe('BookingsService.createBooking', () => {
 describe('BookingsService permission resolution (updateStatus)', () => {
   let prisma: MockPrisma;
   let service: BookingsService;
+  let notifications: ReturnType<typeof makeNotificationsMock>;
 
   beforeEach(() => {
     prisma = makePrismaMock();
     const config = { get: jest.fn().mockReturnValue('20') } as unknown as ConfigService;
-    service = new BookingsService(prisma as unknown as PrismaService, config);
+    notifications = makeNotificationsMock();
+    service = new BookingsService(prisma as unknown as PrismaService, config, notifications as any);
   });
 
   const booking = {
@@ -205,6 +221,11 @@ describe('BookingsService permission resolution (updateStatus)', () => {
       { id: 'worker-user-1', role: ['WORKER'] },
     );
     expect(result.status).toBe('accepted');
+    expect(notifications.notifyOwnerBookingStatus).toHaveBeenCalledWith(
+      'owner-1',
+      'booking-1',
+      'accepted',
+    );
   });
 
   it('user yang tidak terkait booking ditolak', async () => {

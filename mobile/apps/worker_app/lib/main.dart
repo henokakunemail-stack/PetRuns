@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'package:petwalk_core/petwalk_core.dart';
 
@@ -9,6 +10,12 @@ import 'screens/worker_bookings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {
+    // Firebase config belum ada di repo. Push notification aktif setelah
+    // google-services.json / GoogleService-Info.plist ditambahkan.
+  }
   final tokens = await TokenStorage.create();
   runApp(
     ProviderScope(
@@ -52,6 +59,9 @@ final class AuthGateway extends ConsumerWidget {
     }
 
     if (auth.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationSyncProvider).registerDevice(app: 'worker');
+      });
       return const WorkerDashboard();
     }
 
