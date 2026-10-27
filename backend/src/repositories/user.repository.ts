@@ -2,6 +2,7 @@ import { DatabaseClient, dbClient } from '../db/client.ts';
 import { encryptField, decryptField, hashPhone } from '../security/encryption.ts';
 
 export interface UserRow {
+  [column: string]: unknown;
   id: string;
   phone_encrypted: string;
   phone_hash: string;

@@ -2,6 +2,7 @@ import { DatabaseClient, dbClient } from '../db/client.ts';
 import { encryptField, decryptField } from '../security/encryption.ts';
 
 export interface WorkerProfileRow {
+  [column: string]: unknown;
   id: string;
   bio: string | null;
   verification_status: 'PENDING' | 'VERIFIED' | 'REJECTED';
